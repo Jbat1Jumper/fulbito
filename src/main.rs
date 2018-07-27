@@ -268,21 +268,27 @@ fn ask_for_player_direction(simulation_state: &SimState, position: (f32, f32), c
         "Preguntando por la dirección donde debería ir un jugador"
     );
 
-    let mut screen = PromptDirection { simulation_state, position, direction: None };
+    let mut screen = PromptDirection {
+        simulation_state,
+        position,
+        mouse_positon: position
+    };
 
     if let Err(e) = ggez::event::run(ctx, &mut screen) {
         panic!(
             "Mira, paso esto: {}", e
         );
     }
+    let rel_y = screen.mouse_positon.1 - screen.position.1;
+    let rel_x = screen.mouse_positon.0 - screen.position.0;
 
-    screen.direction.unwrap()
+    rel_y.atan2(rel_x)
 }
 
 struct PromptDirection<'a> {
     pub simulation_state: &'a SimState,
+    pub mouse_positon: (f32, f32),
     pub position: (f32, f32),
-    pub direction: Option<f32>,
 }
 
 impl<'a> ggez::event::EventHandler for PromptDirection<'a> {
@@ -312,8 +318,10 @@ impl<'a> ggez::event::EventHandler for PromptDirection<'a> {
         Ok(())
     }
 
-    fn mouse_button_up_event(&mut self, _ctx: &mut ggez::Context, button: ggez::event::MouseButton, x: i32, y: i32) {
+    fn mouse_button_up_event(&mut self, ctx: &mut ggez::Context, button: ggez::event::MouseButton, x: i32, y: i32) {
         info!("Mouse button released: {:?}, x: {}, y: {}", button, x, y);
+        self.mouse_positon = (x as f32, y as f32);
+        ctx.quit().unwrap();
     }
 
     fn mouse_motion_event(
@@ -329,6 +337,7 @@ impl<'a> ggez::event::EventHandler for PromptDirection<'a> {
             "Mouse motion, x: {}, y: {}, relative x: {}, relative y: {}",
             x, y, xrel, yrel
         );
+        self.mouse_positon = (x as f32, y as f32);
     }
 }
 
